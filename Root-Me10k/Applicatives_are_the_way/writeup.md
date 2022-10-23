@@ -9,14 +9,14 @@ Hey, someone told me you were called the network-king, can you find the precious
 
 For this challenge your were provided with a pcapng file filled with a lot of differents protocols (TCP, NBSS, DNS, FTP, ICMP, ...).
 
-To solve it, I used Wireshark. Let's have a look at it from the beginning.
+To solve it, I used Wireshark.
 
-The first thing catching my eyes is a FTP session, right click on it, Follow->TCP Stream: 
+The first thing that caught my eyes is a FTP session, right clicked on it, Follow->TCP Stream: 
 ![image](https://user-images.githubusercontent.com/116515149/197409591-e24b317b-8fb5-4405-bbdf-c53b95a4bea3.png)
 
 `STOR antho.txt` means that a file has been sent to the FTP.
 
-Let's find the content, looking around for tcp-data, I found it: 
+Looking around for ftp-data, I found this: 
 ![image](https://user-images.githubusercontent.com/116515149/197409568-c27d58bc-9dd5-40c0-82d8-d7c90cda2faf.png)
 
 To export the data, I did Follow->TCP Stream, then I selected Raw and copy/pasted the data in a file. 
@@ -25,37 +25,36 @@ To export the data, I did Follow->TCP Stream, then I selected Raw and copy/paste
 I didn't spend much time on the file, but it looked like TLS secrets. So I went back in the beginning and scrolled past the FTP to find... TLS.
 ![image](https://user-images.githubusercontent.com/116515149/197409536-14dfe764-67a5-4618-8a47-93d11a74b6c7.png)
 
-With HTTP, you can do right-click, Follow->HTTP Stream, but the encryption layer provided by TLS blocks us from doing it. But, we have the previous file containing TLS secrets.
-Let's import them, on Wireshark, Edit->Preferences->Protocols->TLS 
+As we have the previous file containing TLS secrets, let's import them on Wireshark, Edit->Preferences->Protocols->TLS: 
 
 ![image](https://user-images.githubusercontent.com/116515149/197409727-841d64da-ed4a-42a7-8c64-a4365384c758.png)
 
-Looking at it, there is a very suspicious file being requested: 
+Looking at it, there was a very suspicious file being requested: 
 ![image](https://user-images.githubusercontent.com/116515149/197409833-87c3b943-3c27-4880-a2bd-770e1f42aee7.png)
 
-To get it, I searched the DATA Packet and expand it, until clicking on the actual data part: 
+To get it, I searched the DATA Packet and expanded it, clicked on the actual data part: 
 ![image](https://user-images.githubusercontent.com/116515149/197409910-a9c46c9b-dafb-4285-8b14-6a8b424f87bf.png)
 
-Then right-click, copy->Value. You know have hex data in your clip-board:
+Then right-click, copy->Value (data in hex):
 ![image](https://user-images.githubusercontent.com/116515149/197409998-395f1105-a3fa-49f7-90f4-8eca82b5b0a4.png)
 
-The zip archive has a password. I tried bruteforcing it but it didn't work.
+The zip archive had a password. I tried bruteforcing it but it didn't work.
 
-So back to the capture, the next thing catching my eyes is DNS query mixed with ICMP packet. 
+So back to the capture, the next thing that caught my eyes was DNS queries mixed with ICMP packet. 
 
 ![image](https://user-images.githubusercontent.com/116515149/197410106-0379c3bc-e80c-493f-a479-bd125bab454b.png)
 
 DNS and ICMP can both be used to exfiltrate data from a well protected network because those protocols are often overlooked when looking for suspicious activities, knowing that, I searched for suspicious data.
-When looking at the DNS, we can see something looking like base64 in the query, so I decrypted them all (yes, I should have scripted it):
+I saw something looking like base64 in the DNS queries, so I decrypted them all (yes, I should have scripted it):
 ![image](https://user-images.githubusercontent.com/116515149/197410260-32addcca-6193-4791-a6f2-84285d0652aa.png)
 
-Next, let's have a look at ICMP, one way of hiding data in ICMP is including data in it, and there are some. 
+Whereas in ICMP, one way of hiding data is to include data in it, which can be seen here. 
 
-From my habits in CTF, I tried extracting all the data, combining it. To do so, I did File->Export Packet Dissections->As plain text (layout is important):
+From habits, I tried extracting all the data and combining it. To do so, I did File->Export Packet Dissections->As plain text (layout is important):
 ![image](https://user-images.githubusercontent.com/116515149/197410513-7f7cb393-6725-41b7-bc4f-4383a55c1f00.png)
 
 
-Then you do you to filter the data:
+Then filtered the data:
 ![image](https://user-images.githubusercontent.com/116515149/197410573-ee66d4b9-4f86-492a-adad-a4b6acd363a8.png)
 
 As said, I tried combining it for far too much time, when I got the idea to tried each one of them as a password for the zip. 
@@ -66,7 +65,5 @@ And it did the trick.
 
 `RM{W1r3Sh4rk_R3@lly_Is_Y0uR_Th1ng:)}`
 
-
-
-
+A very interesting challenge, cheers to the creator.
 
